@@ -5,7 +5,7 @@ use std::{
   path::Path,
 };
 
-use log::info;
+use log::{info, error};
 use prost::Message;
 
 use self::proto::MtMsg;
@@ -47,14 +47,19 @@ impl Streamer {
       None
     } else {
       // info!("left {} bytes in buffer", self.buf.len());
-      let decoded_msg = proto::MtMsg::decode_length_delimited(&mut self.buf);
+      let size = prost::encoding::decode_varint(&mut self.buf).unwrap_or(0);
+      info!("message size: {}", size);
+      let mut to_decode_buf: VecDeque<_> = self.buf.drain(..size as usize).collect();
+
+      let decoded_msg = MtMsg::decode(&mut to_decode_buf);
+
       match decoded_msg {
         Ok(msg) => {
           info!("[len={:?}] message decoded: {:?}", msg.encoded_len(), msg);
           Some(msg)
         }
         Err(err) => {
-          info!("message decode error: {:?}", err);
+          error!("message decode error: {:?}", err);
           self.end = true;
           None
         }
