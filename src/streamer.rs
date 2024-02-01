@@ -18,10 +18,11 @@ pub struct Streamer {
   reader: BufReader<File>,
   buf: VecDeque<u8>,
   end: bool,
+  symbol_of_interest: Vec<String>,
 }
 
 impl Streamer {
-  pub fn new<P: AsRef<Path>>(file_path: P) -> io::Result<Self> {
+  pub fn new<P: AsRef<Path>>(file_path: P, symbol_of_interest: &[&str]) -> io::Result<Self> {
     let file = File::open(file_path)?;
     let reader = BufReader::new(file);
     let buf = VecDeque::new();
@@ -29,6 +30,7 @@ impl Streamer {
       reader,
       buf,
       end: false,
+      symbol_of_interest: symbol_of_interest.iter().map(|s| s.to_string()).collect(),
     })
   }
 
@@ -36,7 +38,7 @@ impl Streamer {
     if self.end {
       return None;
     }
-    if self.buf.len() < 128 {
+    if self.buf.len() < 256 {
       let mut local_buf: Vec<u8> = vec![0; 1024];
       let read_size = self.reader.read(&mut local_buf).unwrap_or(0);
       self.buf.extend(local_buf.iter().take(read_size));
@@ -72,6 +74,23 @@ impl Iterator for Streamer {
   type Item = MtMsg;
 
   fn next(&mut self) -> Option<Self::Item> {
-    self.next_msg()
+    loop {
+      match self.next_msg() {
+        Some(msg) => {
+          if self.symbol_of_interest.is_empty() {
+            return Some(msg);
+          } else {
+            for symbol in &self.symbol_of_interest {
+              if msg.inst.symbol() == *symbol {
+                return Some(msg);
+              }
+            }
+          }
+        }
+        None => {
+          return None;
+        }
+      }
+    }
   }
 }
