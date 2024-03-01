@@ -4,7 +4,7 @@ type reg_t = usize;
 type pc_t = u64;
 
 pub mod block;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashSet, VecDeque};
 
 use block::*;
 use log::{info, warn};
@@ -12,7 +12,7 @@ use log::{info, warn};
 pub mod node;
 
 // use crate::errors::*;
-use crate::graph;
+use crate::graph::{self, Edge};
 use crate::graph::Vertex;
 use crate::instruction::Insn;
 use crate::streamer::proto::MtMsg;
@@ -30,11 +30,17 @@ pub struct Table {
 pub struct Statistic {}
 
 #[derive(Clone, Debug, Default)]
-pub struct Information {}
+pub struct Information {
+  insn_latency_count: Vec<(f64, u64)>,
+  block_count: Vec<u64>,
+  pub last_commit_timestamp: u64,
+  pub updated_timestamp: u64,
+  pub insn_latency_buffer: VecDeque<(insn_t, u64)>,
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct CFG {
-  graph: graph::Graph<Block, Edge>,
+  graph: graph::Graph<Block, BEdge>,
   next_block_index: block_t,
   next_node_index: insn_t,
   pc_insn: BTreeMap<pc_t, insn_t>,
@@ -46,11 +52,21 @@ pub struct CFG {
 
 impl CFG {
   pub fn new() -> Self {
-    Self::default()
+    let mut cfg = Self::default();
+    cfg.new_block(None);
+    cfg
   }
 
-  pub fn graph(&self) -> &graph::Graph<Block, Edge> {
+  pub fn graph(&self) -> &graph::Graph<Block, BEdge> {
     &self.graph
+  }
+
+  fn phi_block(&self) -> block_t {
+    0
+  }
+
+  fn block_head(&self) -> block_t {
+    1
   }
 
   fn new_insn_node(&mut self, insn: Insn, block_index: block_t) -> insn_t {
@@ -64,12 +80,12 @@ impl CFG {
     node_index
   }
 
-  fn new_phi_node(&mut self, block_index: block_t) -> insn_t {
+  fn new_phi_node(&mut self) -> insn_t {
     let node_index = self.next_node_index();
-    let block = self.block_mut(block_index);
+    let block = self.block_mut(self.phi_block());
     block.add_phi(node_index);
     let idx_in_block = block.nodes().len() - 1;
-    self.insn_block.push((block_index, idx_in_block));
+    self.insn_block.push((self.phi_block(), idx_in_block));
     node_index
   }
 
@@ -81,7 +97,7 @@ impl CFG {
     if let Some(last_block_index) = last_block_index {
       self
         .graph
-        .insert_edge(Edge::new(last_block_index, index))
+        .insert_edge(BEdge::new(last_block_index, index))
         .unwrap();
     }
     self.graph.vertex_mut(index).unwrap()
@@ -180,8 +196,10 @@ impl CFG {
     }
   }
 
+  #[allow(unreachable_code)]
   fn concat_block(&mut self, first: block_t, second: block_t) {
-    warn!("concat block: {} -> {}", first, second);
+    panic!("deprecated: do NOT use concat_block");
+    info!("concat block: {} -> {}", first, second);
     let mut second_block = self.block(second).clone();
     let first_block = self.block_mut(first);
     // Create a temporary vector to store modifications
@@ -213,14 +231,13 @@ impl CFG {
 
     let mut modifications = Vec::new();
 
-    let mut phi_nodes: Vec<Node> = Vec::new();
     let mut block_nodes: Vec<Node> = Vec::new();
     let mut new_block_nodes: Vec<Node> = Vec::new();
     let mut phi_nodes_used_by_new_block: HashSet<insn_t> = HashSet::new();
 
     for (idx, node) in self.block(block_index).nodes().iter().enumerate() {
       if node.is_phi() {
-        phi_nodes.push(node.clone());
+        panic!("phi node in the middle of a block")
       } else if idx < insn_index_in_block {
         block_nodes.push(node.clone());
         modifications.push((node.index(), block_index, block_nodes.len() - 1));
@@ -232,16 +249,6 @@ impl CFG {
         }
         new_block_nodes.push(node.clone());
         modifications.push((node.index(), new_block, new_block_nodes.len() - 1));
-      }
-    }
-
-    for phi_node in phi_nodes.drain(..) {
-      if phi_nodes_used_by_new_block.contains(&phi_node.index()) {
-        new_block_nodes.push(phi_node.clone());
-        modifications.push((phi_node.index(), new_block, new_block_nodes.len() - 1));
-      } else {
-        block_nodes.push(phi_node.clone());
-        modifications.push((phi_node.index(), block_index, block_nodes.len() - 1));
       }
     }
 
@@ -261,16 +268,35 @@ impl CFG {
     }
   }
 
-  fn phi_merge(&mut self, old: insn_t, new: insn_t, block_index: block_t) -> insn_t {
+  fn phi_merge(&mut self, old: insn_t, new: insn_t) -> insn_t {
     if self.node(old).is_phi() {
       let node = self.node_mut(old);
       node.srcs.push(new);
       old
     } else {
-      let phi_index = self.new_phi_node(block_index);
+      let phi_index = self.new_phi_node();
       let phi_node = self.node_mut(phi_index);
       phi_node.set_srcs(vec![old, new]);
       phi_index
+    }
+  }
+
+
+  fn update_information(&mut self, msg: &MtMsg, insn_index: insn_t) {
+    let timestamp = msg.timestamp.commit;
+    if timestamp > self.information.last_commit_timestamp {
+      // update latency according to the buffer
+      let buffer_size = self.information.insn_latency_buffer.len();
+      for (insn_index, timestamp) in self.information.insn_latency_buffer.drain(..) {
+        let latency = (timestamp - self.information.last_commit_timestamp) as f64 / buffer_size as f64;
+        
+      }
+
+      
+    } else {
+      assert_eq!(timestamp, self.information.last_commit_timestamp);
+      // append the latency to the buffer
+      self.information.insn_latency_buffer.push_back((insn_index, timestamp));
     }
   }
 
@@ -333,7 +359,7 @@ impl CFG {
 
           self
             .graph
-            .insert_edge(Edge::new(
+            .insert_edge(BEdge::new(
               self.block_index_of_insn(self.last_insn().unwrap()),
               self.block_index_of_insn(global_insn),
             ))
@@ -386,7 +412,7 @@ impl CFG {
       for (old_src, new_src) in old_srcs.iter().zip(srcs.iter()) {
         if !self.equal_or_phi_includes(*old_src, *new_src) {
           let phi_index =
-            self.phi_merge(*old_src, *new_src, self.block_index_of_insn(new_insn_node));
+            self.phi_merge(*old_src, *new_src);
           final_srcs.push(phi_index);
         } else {
           final_srcs.push(*old_src);
@@ -396,7 +422,7 @@ impl CFG {
       self.insn_node_mut(new_insn_node).set_srcs(final_srcs);
     }
 
-    // update stack/table: last_insn, current_block, reg_table
+    // update stack/table: last_insn, current_block, reg_table, information
     self.stack.last_insn = Some(new_insn_node);
     self.stack.current_block = Some(self.insn_node(new_insn_node).block());
 
@@ -406,6 +432,10 @@ impl CFG {
         self.stack.reg_table.insert(dst, new_insn_node);
       }
     }
+
+    self.update_information(&msg, new_insn_node);
+
+
   }
 
   pub fn debug(&self) {
@@ -416,6 +446,16 @@ impl CFG {
         println!("    insn: {:?}", node.insn());
         println!("    srcs: {:?}", node.srcs());
       }
+    }
+
+    for edge in self.graph.edges() {
+      println!("edge: {} -> {}", edge.head(), edge.tail());
+    }
+
+    let loop_tree = self.graph.compute_loop_tree(self.block_head()).unwrap();
+
+    for loop_node in loop_tree.vertices() {
+      println!("loop: {:?}", loop_node);
     }
   }
 }

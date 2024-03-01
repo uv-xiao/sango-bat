@@ -3,3 +3,4 @@
 /riscv-opcodes
 cfg.toml
 src/*.proto
+run.txt

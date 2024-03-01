@@ -1,30 +1,4 @@
    Compiling sango-bat v0.1.0 (/home/uvxiao/repos/bat)
-warning: type `block_t` should have an upper camel case name
- --> src/il.rs:1:6
-  |
-1 | type block_t = usize;
-  |      ^^^^^^^ help: convert the identifier to upper camel case: `BlockT`
-  |
-  = note: `#[warn(non_camel_case_types)]` on by default
-
-warning: type `insn_t` should have an upper camel case name
- --> src/il.rs:2:6
-  |
-2 | type insn_t = usize;
-  |      ^^^^^^ help: convert the identifier to upper camel case: `InsnT`
-
-warning: type `reg_t` should have an upper camel case name
- --> src/il.rs:3:6
-  |
-3 | type reg_t = usize;
-  |      ^^^^^ help: convert the identifier to upper camel case: `RegT`
-
-warning: type `pc_t` should have an upper camel case name
- --> src/il.rs:4:6
-  |
-4 | type pc_t = u64;
-  |      ^^^^ help: convert the identifier to upper camel case: `PcT`
-
 warning: fields `information` and `statistic` are never read
   --> src/il.rs:43:3
    |
@@ -40,38 +14,69 @@ warning: fields `information` and `statistic` are never read
    = note: `#[warn(dead_code)]` on by default
 
 warning: methods `block_of_insn`, `block_mut_of_insn`, `current_block_mut`, and `concat_block` are never used
-   --> src/il.rs:113:6
+   --> src/il.rs:123:6
     |
 47  | impl CFG {
     | -------- methods in this implementation
 ...
-113 |   fn block_of_insn(&self, index: insn_t) -> &Block {
+123 |   fn block_of_insn(&self, index: insn_t) -> &Block {
     |      ^^^^^^^^^^^^^
 ...
-118 |   fn block_mut_of_insn(&mut self, index: insn_t) -> &mut Block {
+128 |   fn block_mut_of_insn(&mut self, index: insn_t) -> &mut Block {
     |      ^^^^^^^^^^^^^^^^^
 ...
-147 |   fn current_block_mut(&mut self) -> &mut Block {
+157 |   fn current_block_mut(&mut self) -> &mut Block {
     |      ^^^^^^^^^^^^^^^^^
 ...
-183 |   fn concat_block(&mut self, first: block_t, second: block_t) {
+193 |   fn concat_block(&mut self, first: block_t, second: block_t) {
     |      ^^^^^^^^^^^^
 
-warning: `sango-bat` (bin "sango-bat") generated 6 warnings
-    Finished dev [unoptimized + debuginfo] target(s) in 1.05s
+warning: `sango-bat` (bin "sango-bat") generated 2 warnings
+    Finished dev [unoptimized + debuginfo] target(s) in 2.40s
      Running `target/debug/sango-bat`
 block: 0
+  node: Node 26 PHI
+    insn: None
+    srcs: [14, 22]
+  node: Node 27 PHI
+    insn: None
+    srcs: [12, 18]
+  node: Node 28 PHI
+    insn: None
+    srcs: [12, 18]
+  node: Node 29 PHI
+    insn: None
+    srcs: [14, 22]
+  node: Node 30 PHI
+    insn: None
+    srcs: [15, 24]
+  node: Node 35 PHI
+    insn: None
+    srcs: [24, 33, 39]
+  node: Node 41 PHI
+    insn: None
+    srcs: [32, 38]
+  node: Node 42 PHI
+    insn: None
+    srcs: [32, 38]
+  node: Node 43 PHI
+    insn: None
+    srcs: [32, 38]
+  node: Node 44 PHI
+    insn: None
+    srcs: [33, 39]
+block: 1
   node: Node 0 spmv+0: bge zero, a0, 88
     insn: Some(Insn { b: 77618275, mnemonic: "bge", disasm: "bge zero, a0, 88", pc: 66004, symbol: Some("spmv"), offset: Some(0), flags: 45058 })
     srcs: []
-block: 1
+block: 2
   node: Node 1 spmv+4: c_slli a0, 2
     insn: Some(Insn { b: 1290, mnemonic: "c_slli", disasm: "c_slli a0, 2", pc: 66008, symbol: Some("spmv"), offset: Some(4), flags: 2 })
     srcs: []
   node: Node 2 spmv+6: add t5, a4, a0
     insn: Some(Insn { b: 10948403, mnemonic: "add", disasm: "add t5, a4, a0", pc: 66010, symbol: Some("spmv"), offset: Some(6), flags: 2 })
     srcs: [1]
-block: 2
+block: 3
   node: Node 6 spmv+20: subw t3, a0, a7
     insn: Some(Insn { b: 1091898939, mnemonic: "subw", disasm: "subw t3, a0, a7", pc: 66024, symbol: Some("spmv"), offset: Some(20), flags: 2 })
     srcs: [4, 3]
@@ -102,7 +107,7 @@ block: 2
   node: Node 15 spmv+44: c_li t4, 0
     insn: Some(Insn { b: 20097, mnemonic: "c_li", disasm: "c_li t4, 0", pc: 66048, symbol: Some("spmv"), offset: Some(44), flags: 2 })
     srcs: []
-block: 3
+block: 4
   node: Node 16 spmv+46: lw a0, 0(a7)
     insn: Some(Insn { b: 566531, mnemonic: "lw", disasm: "lw a0, 0(a7)", pc: 66050, symbol: Some("spmv"), offset: Some(46), flags: 66 })
     srcs: [26]
@@ -133,22 +138,7 @@ block: 3
   node: Node 25 spmv+72: bne t3, a6, -26
     insn: Some(Insn { b: 4279112675, mnemonic: "bne", disasm: "bne t3, a6, -26", pc: 66076, symbol: Some("spmv"), offset: Some(72), flags: 45058 })
     srcs: [13, 18]
-  node: Node 26 PHI
-    insn: None
-    srcs: [14, 22]
-  node: Node 27 PHI
-    insn: None
-    srcs: [12, 18]
-  node: Node 28 PHI
-    insn: None
-    srcs: [12, 18]
-  node: Node 29 PHI
-    insn: None
-    srcs: [14, 22]
-  node: Node 30 PHI
-    insn: None
-    srcs: [15, 24]
-block: 4
+block: 5
   node: Node 31 spmv+76: sw t4, 0(a5)
     insn: Some(Insn { b: 30908451, mnemonic: "sw", disasm: "sw t4, 0(a5)", pc: 66080, symbol: Some("spmv"), offset: Some(76), flags: 130 })
     srcs: [35, 24]
@@ -161,16 +151,7 @@ block: 4
   node: Node 34 spmv+84: bne t5, a4, -74
     insn: Some(Insn { b: 4209974243, mnemonic: "bne", disasm: "bne t5, a4, -74", pc: 66088, symbol: Some("spmv"), offset: Some(84), flags: 45058 })
     srcs: [2, 32]
-  node: Node 35 PHI
-    insn: None
-    srcs: [24, 33, 39]
-  node: Node 43 PHI
-    insn: None
-    srcs: [32, 38]
-  node: Node 44 PHI
-    insn: None
-    srcs: [33, 39]
-block: 5
+block: 6
   node: Node 3 spmv+10: lw a7, 0(a4)
     insn: Some(Insn { b: 469123, mnemonic: "lw", disasm: "lw a7, 0(a4)", pc: 66014, symbol: Some("spmv"), offset: Some(10), flags: 66 })
     srcs: [41]
@@ -180,13 +161,7 @@ block: 5
   node: Node 5 spmv+16: bge a7, a0, 74
     insn: Some(Insn { b: 78173539, mnemonic: "bge", disasm: "bge a7, a0, 74", pc: 66020, symbol: Some("spmv"), offset: Some(16), flags: 45058 })
     srcs: [3, 4]
-  node: Node 41 PHI
-    insn: None
-    srcs: [32, 38]
-  node: Node 42 PHI
-    insn: None
-    srcs: [32, 38]
-block: 6
+block: 7
   node: Node 36 spmv+90: c_li t4, 0
     insn: Some(Insn { b: 20097, mnemonic: "c_li", disasm: "c_li t4, 0", pc: 66094, symbol: Some("spmv"), offset: Some(90), flags: 2 })
     srcs: []
@@ -202,7 +177,18 @@ block: 6
   node: Node 40 spmv+100: bne t5, a4, -90
     insn: Some(Insn { b: 4209972195, mnemonic: "bne", disasm: "bne t5, a4, -90", pc: 66104, symbol: Some("spmv"), offset: Some(100), flags: 45058 })
     srcs: [2, 38]
-block: 7
+block: 8
   node: Node 45 spmv+88: c_jr ra
     insn: Some(Insn { b: 32898, mnemonic: "c_jr", disasm: "c_jr ra", pc: 66092, symbol: Some("spmv"), offset: Some(88), flags: 348162 })
     srcs: []
+edge: 1 -> 2
+edge: 2 -> 3
+edge: 2 -> 6
+edge: 2 -> 7
+edge: 3 -> 4
+edge: 3 -> 5
+edge: 4 -> 4
+edge: 5 -> 6
+edge: 5 -> 8
+dfs_number: {7: 2, 4: 7, 1: 0, 8: 6, 5: 5, 2: 1, 6: 3, 3: 4}
+loop: Loop { header: 4, nodes: {4} }

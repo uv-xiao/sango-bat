@@ -109,22 +109,22 @@ impl graph::Vertex for Block {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct Edge {
+pub struct BEdge {
   head: block_t,
   tail: block_t,
 }
 
-impl Edge {
+impl BEdge {
   
   pub fn new(head: block_t, tail: block_t) -> Self {
-    Edge {
+    BEdge {
       head,
       tail,
     }
   }
 }
 
-impl graph::Edge for Edge {
+impl graph::Edge for BEdge {
 
 
   fn head(&self) -> usize {
