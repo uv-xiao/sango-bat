@@ -8,10 +8,10 @@ use std::{
 use log::{info, error};
 use prost::Message;
 
-use self::proto::MtMsg;
+use self::proto::UtMsg;
 
 pub mod proto {
-  include!(concat!(env!("OUT_DIR"), "/mtproto.rs"));
+  include!(concat!(env!("OUT_DIR"), "/utproto.rs"));
 }
 
 pub struct Streamer {
@@ -34,7 +34,7 @@ impl Streamer {
     })
   }
 
-  pub fn next_msg(&mut self) -> Option<MtMsg> {
+  pub fn next_msg(&mut self) -> Option<UtMsg> {
     if self.end {
       return None;
     }
@@ -53,7 +53,7 @@ impl Streamer {
       info!("message size: {}", size);
       let mut to_decode_buf: VecDeque<_> = self.buf.drain(..size as usize).collect();
 
-      let decoded_msg = MtMsg::decode(&mut to_decode_buf);
+      let decoded_msg = UtMsg::decode(&mut to_decode_buf);
 
       match decoded_msg {
         Ok(msg) => {
@@ -71,7 +71,7 @@ impl Streamer {
 }
 
 impl Iterator for Streamer {
-  type Item = MtMsg;
+  type Item = UtMsg;
 
   fn next(&mut self) -> Option<Self::Item> {
     loop {

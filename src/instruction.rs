@@ -9,7 +9,7 @@ use self::{accessor::InsnAccess, flag::Flags};
 #[derive(Clone, Debug)]
 pub struct Insn {
   b: u64,
-  mnemonic: String,
+  // mnemonic: String,
   disasm: String,
   pc: u64,
   symbol: Option<String>,
@@ -18,10 +18,9 @@ pub struct Insn {
 }
 
 impl Insn {
-  pub fn new(msg: &proto::MtMsg) -> Self {
+  pub fn new(msg: &proto::UtMsg) -> Self {
     Insn {
       b: msg.inst.binary as u64,
-      mnemonic: msg.inst.mnemonic.clone(),
       disasm: msg.inst.disasm.clone(),
       pc: msg.inst.pc,
       symbol: msg.inst.symbol.clone(),
@@ -40,10 +39,6 @@ impl Insn {
 
   pub fn offset(&self) -> Option<u64> {
     self.offset
-  }
-
-  pub fn mnemonic(&self) -> &str {
-    &self.mnemonic
   }
 
   pub fn disasm(&self) -> &str {

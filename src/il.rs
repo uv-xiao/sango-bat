@@ -15,7 +15,7 @@ pub mod node;
 use crate::graph::{self, Edge};
 use crate::graph::Vertex;
 use crate::instruction::Insn;
-use crate::streamer::proto::MtMsg;
+use crate::streamer::proto::UtMsg;
 
 use self::node::Node;
 
@@ -282,7 +282,7 @@ impl CFG {
   }
 
 
-  fn update_information(&mut self, msg: &MtMsg, insn_index: insn_t) {
+  fn update_information(&mut self, msg: &UtMsg, insn_index: insn_t) {
     let timestamp = msg.timestamp.commit;
     if timestamp > self.information.last_commit_timestamp {
       // update latency according to the buffer
@@ -317,7 +317,7 @@ impl CFG {
    * - node handling
    *   - iterate the registers of the instruction
    */
-  pub fn parse_msg(&mut self, msg: MtMsg) {
+  pub fn parse_msg(&mut self, msg: UtMsg) {
     let insn = Insn::new(&msg);
     let pc = insn.pc();
 

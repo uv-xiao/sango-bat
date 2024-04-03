@@ -532,6 +532,8 @@ where
     let dfs = self.compute_dfs_tree(root)?;
     let dfs_pre_order = dfs.compute_pre_order(root)?;
 
+    println!("dfs_pre_order: {:?}", dfs_pre_order);
+
     let dfs_parent = |vertex| dfs.predecessors[&vertex].iter().next().cloned();
 
     // DFS-numbering and reverse numbering (starting from 0 instead of 1 as in the paper)
@@ -575,6 +577,8 @@ where
     }
     let semi = semi;
 
+    println!("semi: {:?}", semi);
+    
     fn compress(
       ancestor: &mut FxHashMap<usize, Option<usize>>,
       label: &mut FxHashMap<usize, usize>,
@@ -1370,6 +1374,35 @@ mod tests {
   }
 
   #[test]
+  fn test_dominator_tree_2() {
+    let graph = {
+      let mut graph = Graph::new();
+
+      graph.insert_vertex(0).unwrap();
+      graph.insert_vertex(1).unwrap();
+      graph.insert_vertex(2).unwrap();
+      graph.insert_vertex(3).unwrap();
+      graph.insert_vertex(4).unwrap();
+      graph.insert_vertex(5).unwrap();
+      graph.insert_vertex(6).unwrap();
+
+      graph.insert_edge((6, 4)).unwrap();
+      graph.insert_edge((6, 5)).unwrap();
+      graph.insert_edge((5, 2)).unwrap();
+      graph.insert_edge((4, 3)).unwrap();
+      graph.insert_edge((3, 1)).unwrap();
+      graph.insert_edge((2, 0)).unwrap();
+      graph.insert_edge((1, 0)).unwrap();
+
+      graph
+    };
+
+    let dominator_tree = graph.compute_dominator_tree(6).unwrap();
+
+    println!("{}", dominator_tree.dot_graph());
+  }
+
+  #[test]
   fn test_all_predecessors() {
     let graph = create_test_graph();
     let predecessors = graph.compute_predecessors().unwrap();
@@ -1587,7 +1620,7 @@ mod tests {
   }
 
   #[test]
-  fn test_compute_loops_nested_loops() {
+  fn test_compute_loops_nested_looaps() {
     let graph = {
       let mut graph = Graph::new();
 
